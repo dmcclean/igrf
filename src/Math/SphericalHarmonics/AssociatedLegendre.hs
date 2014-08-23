@@ -1,3 +1,4 @@
+-- | Provides definitions of associated Legendre functions used in spherical harmonic models.
 module Math.SphericalHarmonics.AssociatedLegendre
 (
   associatedLegendreFunction
@@ -9,7 +10,11 @@ import Math.Polynomial hiding (x)
 import Math.Polynomial.Legendre
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
-associatedLegendreFunction :: (Floating a, Ord a) => Int -> Int -> a -> a
+-- | Computes the associated Legendre function of degree 'n' and order 'm'.
+-- Note that the resulting function may not be a polynomial, as when `m` is odd it involves a fractional power of `x`.
+associatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the desired associated Legendre function.
+                           -> Int -- ^ Order 'm' of the desired associated Legendre function.
+                           -> a -> a
 associatedLegendreFunction n m = f
   where
   	f x = (nonPolyTerm x) * (evalPoly p' x)
@@ -18,12 +23,15 @@ associatedLegendreFunction n m = f
   	p = legendre n
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
-schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int -> Int -> a -> a
+-- | Computes the Schmidt semi-normalized associated Legendre function of degree 'n' and order 'm'.
+schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the desired function.
+                                                -> Int -- ^ Order 'm' of the desired function.
+                                                -> a -> a
 schmidtSemiNormalizedAssociatedLegendreFunction n 0 = associatedLegendreFunction n 0
 schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLegendreFunction n m
   where
   	factor = (sqrt $ 2 / rawFactor)
   	rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
-
+    
 rawFactor' :: Integer -> Integer -> Integer
 rawFactor' n m = product . map (max 1) $ enumFromTo (n - m + 1) (n + m)

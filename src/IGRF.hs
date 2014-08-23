@@ -1,11 +1,13 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE RankNTypes #-}
 
+-- | An implementation of the International Geomagnetic Reference Field, as defined at http://www.ngdc.noaa.gov/IAGA/vmod/igrf.html.
 module IGRF
 (
   MagneticModel(..)
 , scalarPotential
 , gradientOfScalarPotential
+, fieldInLocalTangentPlane
 , igrf11
 )
 where
@@ -51,11 +53,24 @@ gradientOfScalarPotential :: (Floating a, Ord a) => MagneticModel a -- ^ Magneti
                           -> a -- ^ Geocentric radius (kilometer)
                           -> a -- ^ Geocentric colatitude (radian)
                           -> a -- ^ Geocentric longitude (radian)
-                          -> (a, a, a) -- ^ Radial, colat, lon components of gradient
+                          -> (a, a, a) -- ^ Radial, colat, lon components of gradient (nT, nT km, nT km)
 gradientOfScalarPotential model t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
   where
   	modelGrad = grad (\[r', c', l'] -> scalarPotential (fmap auto model) (auto t) r' c' l')
   	makeTuple [x, y, z] = (x, y, z)
+
+fieldInLocalTangentPlane :: (Floating a, Ord a) => MagneticModel a
+                         -> a -- ^ Time since model epoch (year)
+                         -> a -- ^ Geocentric radius (kilometer)
+                         -> a -- ^ Geocentric colatitude (radian)
+                         -> a -- ^ Geocentric longitude (radian)
+                         -> (a, a, a) -- ^ North, East, Down components of magnetic field (nanoTesla)
+fieldInLocalTangentPlane model t r colat lon = (n, e, d)
+  where
+  	(r', colat', lon') = gradientOfScalarPotential model t r colat lon
+  	n = -colat' / r
+  	e = lon' / (r * sin colat) -- unclear why this is not negated as it is at http://magician.ucsd.edu/essentials/webbookse12.html and in the IGRF paper
+  	d = -r'
 
 igrf11 :: (Floating a) => MagneticModel a
 igrf11 = MagneticModel
