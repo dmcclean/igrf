@@ -24,23 +24,23 @@ scalarPotential :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field mo
                 -> a -- ^ Geocentric colatitude (radian)
                 -> a -- ^ Geocentric longitude (radian)
                 -> a -- ^ Model field strength (nanoTesla)
-scalarPotential m t r colat lon = refR * sumOverDegree
+scalarPotential model t r colat lon = refR * sumOverDegree
   where
-  	refR = referenceRadius m
-  	n = modelDegree m
-  	gs = gCoeffs m
-  	hs = hCoeffs m
-  	sumOverDegree = sum $ fmap degreeTerm [1..n]
-  	degreeTerm n' = ((refR / r) ^ (n' + 1)) * (sum $ fmap (orderTerm n') [0..n'])
-  	orderTerm n' m' = lonFactor * (p (cos colat))
+  	refR = referenceRadius model
+  	deg = modelDegree model
+  	gs = gCoeffs model
+  	hs = hCoeffs model
+  	sumOverDegree = sum $ fmap degreeTerm [1..deg]
+  	degreeTerm n = ((refR / r) ^ (n + 1)) * (sum $ fmap (orderTerm n) [0..n])
+  	orderTerm n m = lonFactor * (p (cos colat))
   	  where
-  	  	scaledLon = lon * fromIntegral m'
+  	  	scaledLon = lon * fromIntegral m
   	  	lonFactor = (g' * cos scaledLon) + (h' * sin scaledLon)
-  	  	p = schmidtSemiNormalizedAssociatedLegendreFunction n' m'
+  	  	p = schmidtSemiNormalizedAssociatedLegendreFunction n m
   	  	g' = g + (gsv * t)
   	  	h' = h + (hsv * t)
-  	  	(g, gsv) = gs !! computeIndex n' m'
-  	  	(h, hsv) = hs !! computeIndex n' m'
+  	  	(g, gsv) = gs !! computeIndex n m
+  	  	(h, hsv) = hs !! computeIndex n m
 
 negativeGradient :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
                  -> a -- ^ Time since model epoch (year)
@@ -48,9 +48,9 @@ negativeGradient :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field m
                  -> a -- ^ Geocentric colatitude (radian)
                  -> a -- ^ Geocentric longitude (radian)
                  -> (a, a, a) -- ^ Radial, colat, lon components of gradient
-negativeGradient m t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
+negativeGradient model t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
   where
-  	modelGrad = grad (\[r', c', l'] -> scalarPotential (fmap auto m) (auto t) r' c' l')
+  	modelGrad = grad (\[r', c', l'] -> scalarPotential (fmap auto model) (auto t) r' c' l')
   	makeTuple [x, y, z] = (x, y, z)
 
 igrf11 :: (Floating a) => MagneticModel a
