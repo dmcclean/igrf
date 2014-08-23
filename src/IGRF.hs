@@ -37,6 +37,7 @@ scalarPotential model t r colat lon = refR * sumOverDegree
   	  	scaledLon = lon * fromIntegral m
   	  	lonFactor = (g' * cos scaledLon) + (h' * sin scaledLon)
   	  	p = schmidtSemiNormalizedAssociatedLegendreFunction n m
+  	  	--p = schmidt' n m
   	  	g' = g + (gsv * t)
   	  	h' = h + (hsv * t)
   	  	(g, gsv) = gs !! computeIndex n m
