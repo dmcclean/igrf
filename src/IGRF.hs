@@ -31,7 +31,7 @@ scalarPotential m t r colat lon = refR * sumOverDegree
   	gs = gCoeffs m
   	hs = hCoeffs m
   	sumOverDegree = sum $ fmap degreeTerm [1..n]
-  	degreeTerm n' = ((refR / r) ^ (n' + 1)) * (sum $ fmap (orderTerm n) [0..n'])
+  	degreeTerm n' = ((refR / r) ^ (n' + 1)) * (sum $ fmap (orderTerm n') [0..n'])
   	orderTerm n' m' = lonFactor * (p (cos colat))
   	  where
   	  	scaledLon = lon * fromIntegral m'
@@ -56,7 +56,7 @@ negativeGradient m t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat
 igrf11 :: (Floating a) => MagneticModel a
 igrf11 = MagneticModel
        {
-         modelDegree = 2
+         modelDegree = 13
        , referenceRadius = 6371.2
        , gCoeffs = [(-29496.5, 11.4), (-1585.9, 16.7),
                     (-2396.6, -11.3), (3026.0, -3.9), (1668.6, 2.7),
