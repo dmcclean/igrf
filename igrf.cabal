@@ -3,8 +3,11 @@
 
 name:                igrf
 version:             0.1.0.0
-synopsis:            Implementation of the International Geomagnetic Reference Field.
--- description:         
+synopsis:            International Geomagnetic Reference Field
+description:
+  An implemetation of the Internation Geomagnetic Reference Field, a model of the Earth's magnetic field.
+  .
+  Includes model coefficients from the 11th Edition of the IGRF.
 homepage:            https://github.com/dmcclean/igrf
 license:             BSD3
 license-file:        LICENSE
@@ -12,9 +15,14 @@ author:              J. Douglas McClean
 maintainer:          douglas.mcclean@gmail.com
 -- copyright:           
 category:            Science
+stability:           Experimental
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
+
+source-repository head
+  type: git
+  location: git://github.com/dmcclean/igrf.git
 
 library
   exposed-modules:     IGRF,
