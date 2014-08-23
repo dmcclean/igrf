@@ -2,8 +2,6 @@ module Math.SphericalHarmonics.AssociatedLegendre
 (
   associatedLegendreFunction
 , schmidtSemiNormalizedAssociatedLegendreFunction
-, rawFactor'
-, schmidt'
 )
 where
 
@@ -16,7 +14,6 @@ associatedLegendreFunction n m = f
   where
   	f x = (nonPolyTerm x) * (evalPoly p' x)
   	nonPolyTerm x = (1 - (x * x)) ** (fromIntegral m / 2)
-  	p'' = scalePoly (condonShortleyPhase n) p'
   	p' = polyDerivs p !! m
   	p = legendre n
 
@@ -25,29 +22,8 @@ schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int ->
 schmidtSemiNormalizedAssociatedLegendreFunction n 0 = associatedLegendreFunction n 0
 schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLegendreFunction n m
   where
-  	--factor = condonShortleyPhase m * (sqrt $ 2 / rawFactor)
   	factor = (sqrt $ 2 / rawFactor)
   	rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
 
--- definition from https://www.spenvis.oma.be/help/background/magfield/legendre.html#Schmidt1
-schmidt' :: (Floating a, Eq a) => Int -> Int -> a -> a
-schmidt' n = f
-  where
-    n' = fromIntegral n :: Integer
-    basic = poly BE [1, 0, -1] -- x^2 - 1
-    pow = powPoly basic n
-    denom = (2 ^ n') * (product [1..n'])
-    f 0 = evalPoly $ scalePoly (recip . fromIntegral $ denom) (polyDerivs pow !! n)
-    f m = \x -> (sqrt (argRoot x)) * (f' x)
-      where
-        m' = fromIntegral m :: Integer
-        nonPolyTerm x = (1 - (x * x)) ^ m
-        argRoot x = 2 * (nonPolyTerm x) / (fromIntegral $ rawFactor' n' m')
-        f' = evalPoly $ scalePoly (recip . fromIntegral $ denom) (polyDerivs pow !! (n + m))
-
 rawFactor' :: Integer -> Integer -> Integer
 rawFactor' n m = product . map (max 1) $ enumFromTo (n - m + 1) (n + m)
-
-condonShortleyPhase :: (Num a) => Int -> a
-condonShortleyPhase n | even n    =  1
-                      | otherwise = -1
