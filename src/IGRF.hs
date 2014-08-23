@@ -2,8 +2,12 @@
 {-# LANGUAGE RankNTypes #-}
 
 module IGRF
---(
---)
+(
+  MagneticModel(..)
+, scalarPotential
+, gradientOfScalarPotential
+, igrf11
+)
 where
 
 import Math.SphericalHarmonics.AssociatedLegendre
@@ -42,13 +46,13 @@ scalarPotential model t r colat lon = refR * sumOverDegree
   	  	(g, gsv) = gs !! computeIndex n m
   	  	(h, hsv) = hs !! computeIndex n m
 
-negativeGradient :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
-                 -> a -- ^ Time since model epoch (year)
-                 -> a -- ^ Geocentric radius (kilometer)
-                 -> a -- ^ Geocentric colatitude (radian)
-                 -> a -- ^ Geocentric longitude (radian)
-                 -> (a, a, a) -- ^ Radial, colat, lon components of gradient
-negativeGradient model t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
+gradientOfScalarPotential :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
+                          -> a -- ^ Time since model epoch (year)
+                          -> a -- ^ Geocentric radius (kilometer)
+                          -> a -- ^ Geocentric colatitude (radian)
+                          -> a -- ^ Geocentric longitude (radian)
+                          -> (a, a, a) -- ^ Radial, colat, lon components of gradient
+gradientOfScalarPotential model t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
   where
   	modelGrad = grad (\[r', c', l'] -> scalarPotential (fmap auto model) (auto t) r' c' l')
   	makeTuple [x, y, z] = (x, y, z)
