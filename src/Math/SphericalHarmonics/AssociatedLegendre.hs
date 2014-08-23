@@ -2,6 +2,7 @@ module Math.SphericalHarmonics.AssociatedLegendre
 (
   associatedLegendreFunction
 , schmidtSemiNormalizedAssociatedLegendreFunction
+, rawFactor'
 )
 where
 
@@ -20,11 +21,15 @@ associatedLegendreFunction n m = f
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int -> Int -> a -> a
-schmidtSemiNormalizedAssociatedLegendreFunction n 0 = evalPoly (legendre n)
+schmidtSemiNormalizedAssociatedLegendreFunction n 0 = associatedLegendreFunction n 0
 schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLegendreFunction n m
   where
   	factor = condonShortleyPhase m * (sqrt $ 2 / rawFactor)
-  	rawFactor = fromIntegral $ product (enumFromTo (n - m) (n + m))
+  	--factor = (sqrt $ 2 / rawFactor)
+  	rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
+
+rawFactor' :: Integer -> Integer -> Integer
+rawFactor' n m = product . map (max 1) $ enumFromTo (n - m) (n + m)
 
 condonShortleyPhase :: (Num a) => Int -> a
 condonShortleyPhase n | even n    =  1
