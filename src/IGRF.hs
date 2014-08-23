@@ -5,10 +5,10 @@
 module IGRF
 (
   MagneticModel(..)
-, scalarPotential
-, gradientOfScalarPotential
-, fieldInLocalTangentPlane
 , igrf11
+, fieldInLocalTangentPlane
+, gradientOfScalarPotential
+, scalarPotential
 )
 where
 
