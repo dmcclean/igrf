@@ -15,7 +15,7 @@ associatedLegendreFunction n m = f
   where
   	f x = (nonPolyTerm x) * (evalPoly p'' x)
   	nonPolyTerm x = (1 - (x * x)) ** (fromIntegral m / 2)
-  	p'' = scalePoly (condonShortleyPhase m) p'
+  	p'' = scalePoly (condonShortleyPhase n) p'
   	p' = polyDerivs p !! m
   	p = legendre n
 
