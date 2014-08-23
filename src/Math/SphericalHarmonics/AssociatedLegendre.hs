@@ -29,7 +29,7 @@ schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLeg
   	rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
 
 rawFactor' :: Integer -> Integer -> Integer
-rawFactor' n m = product . map (max 1) $ enumFromTo (n - m) (n + m)
+rawFactor' n m = product . map (max 1) $ enumFromTo (n - m + 1) (n + m)
 
 condonShortleyPhase :: (Num a) => Int -> a
 condonShortleyPhase n | even n    =  1
