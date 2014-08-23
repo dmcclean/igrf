@@ -12,6 +12,7 @@ import Math.Polynomial.Legendre
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 -- | Computes the associated Legendre function of degree 'n' and order 'm'.
 -- Note that the resulting function may not be a polynomial, as when `m` is odd it involves a fractional power of `x`.
+-- As used in the geodesy and magnetics literature, these functions do not include the Condon-Shortley phase.
 associatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the desired associated Legendre function.
                            -> Int -- ^ Order 'm' of the desired associated Legendre function.
                            -> a -> a
@@ -24,6 +25,7 @@ associatedLegendreFunction n m = f
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 -- | Computes the Schmidt semi-normalized associated Legendre function of degree 'n' and order 'm'.
+-- As used in the geodesy and magnetics literature, these functions do not include the Condon-Shortley phase.
 schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the desired function.
                                                 -> Int -- ^ Order 'm' of the desired function.
                                                 -> a -> a

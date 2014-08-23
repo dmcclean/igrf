@@ -15,15 +15,20 @@ where
 import Math.SphericalHarmonics.AssociatedLegendre
 import Numeric.AD
 
+-- | Represents a spherical harmonic model of a magnetic field.
 data MagneticModel a = MagneticModel 
                      {
-                       modelDegree :: Int
-                     , referenceRadius :: a
-                     , gCoeffs :: [(a,a)] -- [(g_1_0, g_1_0_sv), g_1_1, g_2_0, g_2_1, g_2_2, g_3_0, g_3_1, g_3_2, g_3_3, ...]
-                     , hCoeffs :: [(a,a)] -- same for h, even though h_n_0 is always 0
+                       modelDegree :: Int   -- ^ The maximum degree of the model. Must be >= 1.
+                     , referenceRadius :: a -- ^ The reference radius used to define the model. (kilometer)
+                     , gCoeffs :: [(a,a)]   -- ^ G coefficients of the model and their secular variations. (nT, nT / yr)
+                                            -- These coefficients are stored in the order [(g_1_0, g_1_0_sv), g_1_1, g_2_0, g_2_1, g_2_2, g_3_0, g_3_1, g_3_2, g_3_3, ...]
+                                            -- There must be Triangle('modelDegree' + 1) - 1 coefficients.
+                     , hCoeffs :: [(a,a)]   -- ^ H coefficients and their secular variations. (nT, nT / yr)
+                                            -- These coefficeints are stored as the G coefficients and the lengths of the lists must match.
                      }
   deriving (Functor)
 
+-- | Computes the scalar potential of the magnetic field model at a specified time and geocentric position.
 scalarPotential :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
                 -> a -- ^ Time since model epoch (year)
                 -> a -- ^ Geocentric radius (kilometer)
@@ -48,23 +53,27 @@ scalarPotential model t r colat lon = refR * sumOverDegree
   	  	(g, gsv) = gs !! computeIndex n m
   	  	(h, hsv) = hs !! computeIndex n m
 
+-- | Computes the gradient of the scalar potential of the magnetic field model, in spherical coordinates, at a specified
+-- time and geocentric position.
 gradientOfScalarPotential :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
                           -> a -- ^ Time since model epoch (year)
                           -> a -- ^ Geocentric radius (kilometer)
                           -> a -- ^ Geocentric colatitude (radian)
                           -> a -- ^ Geocentric longitude (radian)
-                          -> (a, a, a) -- ^ Radial, colat, lon components of gradient (nT, nT km, nT km)
+                          -> (a, a, a) -- ^ Radial, colatitudinal, and longitudinal components of gradient (nT, nT km, nT km)
 gradientOfScalarPotential model t r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
   where
   	modelGrad = grad (\[r', c', l'] -> scalarPotential (fmap auto model) (auto t) r' c' l')
   	makeTuple [x, y, z] = (x, y, z)
 
-fieldInLocalTangentPlane :: (Floating a, Ord a) => MagneticModel a
+-- | Computes the field strength of the magnetic field model at a specified time and geocentric position, in Cartesian coordinates.
+-- The result is expressed in a reference frame locally tangent to the specified geocentric position.
+fieldInLocalTangentPlane :: (Floating a, Ord a) => MagneticModel a -- ^ Magnetic field model
                          -> a -- ^ Time since model epoch (year)
                          -> a -- ^ Geocentric radius (kilometer)
                          -> a -- ^ Geocentric colatitude (radian)
                          -> a -- ^ Geocentric longitude (radian)
-                         -> (a, a, a) -- ^ North, East, Down components of magnetic field (nanoTesla)
+                         -> (a, a, a) -- ^ North, East, and down components of magnetic field (nanoTesla)
 fieldInLocalTangentPlane model t r colat lon = (n, e, d)
   where
   	(r', colat', lon') = gradientOfScalarPotential model t r colat lon
@@ -72,6 +81,8 @@ fieldInLocalTangentPlane model t r colat lon = (n, e, d)
   	e = lon' / (r * sin colat) -- unclear why this is not negated as it is at http://magician.ucsd.edu/essentials/webbookse12.html and in the IGRF paper
   	d = -r'
 
+-- | The International Geomagnetic Reference Field model, 11th edition.
+-- Model epoch is January 1st, 2010.
 igrf11 :: (Floating a) => MagneticModel a
 igrf11 = MagneticModel
        {
