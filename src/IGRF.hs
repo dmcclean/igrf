@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE RankNTypes #-}
 
--- | An implementation of the International Geomagnetic Reference Field, as defined at http://www.ngdc.noaa.gov/IAGA/vmod/igrf.html.
+-- | An implementation of the International Geomagnetic Reference Field, as defined at <http://www.ngdc.noaa.gov/IAGA/vmod/igrf.html>.
 module IGRF
 (
   MagneticModel(..)
