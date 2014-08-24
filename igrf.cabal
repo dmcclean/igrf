@@ -26,6 +26,7 @@ source-repository head
 
 library
   exposed-modules:     IGRF,
+                       Math.SphericalHarmonics,
                        Math.SphericalHarmonics.AssociatedLegendre
   -- other-modules:       
   -- other-extensions:    
