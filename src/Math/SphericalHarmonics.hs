@@ -57,7 +57,7 @@ evaluateModel model r colat lon = refR * sumOverDegree
     deg = modelDegree model
     gs = map fst $ coefficients model
     hs = map snd $ coefficients model
-    sumOverDegree = sum $ fmap degreeTerm [1..deg]
+    sumOverDegree = sum $ fmap degreeTerm [0..deg]
     degreeTerm n = ((refR / r) ^ (n + 1)) * (sum $ fmap (orderTerm n) [0..n])
     orderTerm n m = lonFactor * (p (cos colat))
       where
@@ -93,7 +93,7 @@ evaluateModelGradientInLocalTangentPlane model r colat lon = (n, e, d)
     d = -r'
 
 computeIndex :: Int -> Int -> Int
-computeIndex n m = triangle n + m - 1
+computeIndex n m = triangle n + m
 
 triangle :: Int -> Int
 triangle n = (n * (n + 1)) `div` 2
