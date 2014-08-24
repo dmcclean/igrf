@@ -24,19 +24,19 @@ data SphericalHarmonicModel a = SphericalHarmonicModel
                               }
   deriving (Functor)
 
--- TODO: consider how to relax these error conditions
+-- TODO: consider how to relax the reference radius error condition
 -- TODO: make SphericalHarmonicModel an instance of additive typeclass
 -- | Adds two compatible spherical harmonic models.
 combine :: (Num a, Eq a) => SphericalHarmonicModel a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-combine m1 m2 | (modelDegree m1 /= modelDegree m2)         = error "Incompatible model degrees."
-              | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible model reference radii."
+combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible model reference radii."
               | otherwise                                  = SphericalHarmonicModel
                                                            {
-                                                             modelDegree = modelDegree m1
+                                                             modelDegree = max (modelDegree m1) (modelDegree m2)
                                                            , referenceRadius = referenceRadius m1
-                                                           , coefficients = zipWith addPairs (coefficients m1) (coefficients m2)
+                                                           , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
                                                            }
   where
+    combineCoefficients c1 c2 = take (max (length c1) (length c2)) $ zipWith addPairs (c1 ++ repeat (0,0)) (c2 ++ repeat (0,0))
     addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
 -- | Linearly scales a spherical harmonic model.
