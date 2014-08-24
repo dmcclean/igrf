@@ -86,7 +86,7 @@ evaluateModelGradientInLocalTangentPlane :: (Floating a, Ord a) => SphericalHarm
                                          -> a -- ^ Spherical radius
                                          -> a -- ^ Spherical colatitude (radian)
                                          -> a -- ^ Spherical longitude (radian)
-                                         -> (a, a, a) -- ^ North, East, and down components of magnetic field (nanoTesla)
+                                         -> (a, a, a) -- ^ North, East, and down components of gradient
 evaluateModelGradientInLocalTangentPlane model r colat lon = (n, e, d)
   where
     (r', colat', lon') = evaluateModelGradient model r colat lon
