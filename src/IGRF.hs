@@ -16,11 +16,12 @@ import Math.SphericalHarmonics
 -- | Represents a spherical harmonic model of a magnetic field.
 data MagneticModel a = MagneticModel 
                      {
-                       fieldAtEpoch :: SphericalHarmonicModel a    -- | Field at model epoch in nT, reference radius in km
-                     , secularVariation :: SphericalHarmonicModel a -- | Secular variation in nT / yr, reference radius in km
+                       fieldAtEpoch :: SphericalHarmonicModel a     -- ^ Field at model epoch in nT, reference radius in km
+                     , secularVariation :: SphericalHarmonicModel a -- ^ Secular variation in nT / yr, reference radius in km
                      }
   deriving (Functor)
 
+-- | Gets a spherical harmonic model of a magnetic field at a specified time offset from the model epoch.
 fieldAtTime :: (Num a, Eq a) => MagneticModel a -- ^ Magnetic field model
             -> a -- ^ Time since model epoch (year)
             -> SphericalHarmonicModel a -- ^ Spherical harmonic model of magnetic field at specified time. Field in nT, reference radius in km

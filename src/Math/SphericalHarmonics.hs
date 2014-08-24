@@ -1,5 +1,6 @@
 {-# LANGUAGE DeriveFunctor #-}
 
+-- | Provides spherical harmonic models of scalar-valued functions.
 module Math.SphericalHarmonics
 (
   SphericalHarmonicModel(..)
@@ -14,6 +15,7 @@ where
 import Math.SphericalHarmonics.AssociatedLegendre
 import Numeric.AD
 
+-- | Represents a spherical harmonic model of a scalar-valued function.
 data SphericalHarmonicModel a = SphericalHarmonicModel
                               {
                                 modelDegree :: Int       -- ^ The maximum degree of the model. Must be >= 0.
