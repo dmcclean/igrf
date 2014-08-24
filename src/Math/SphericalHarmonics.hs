@@ -86,13 +86,13 @@ evaluateModelGradientInLocalTangentPlane :: (Floating a, Ord a) => SphericalHarm
                                          -> a -- ^ Spherical radius
                                          -> a -- ^ Spherical colatitude (radian)
                                          -> a -- ^ Spherical longitude (radian)
-                                         -> (a, a, a) -- ^ North, East, and down components of gradient
-evaluateModelGradientInLocalTangentPlane model r colat lon = (n, e, d)
+                                         -> (a, a, a) -- ^ East, North, and up components of gradient
+evaluateModelGradientInLocalTangentPlane model r colat lon = (e, n, u)
   where
     (r', colat', lon') = evaluateModelGradient model r colat lon
-    n = -colat' / r
-    e = lon' / (r * sin colat) -- unclear why this is not negated as it is at http://magician.ucsd.edu/essentials/webbookse12.html and in the IGRF paper
-    d = -r'
+    e = lon' / (r * sin colat)
+    n = -colat' / r -- negated because the colatitude increase southward
+    u = r'
 
 computeIndex :: Int -> Int -> Int
 computeIndex n m = triangle n + m
