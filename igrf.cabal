@@ -5,7 +5,7 @@ name:                igrf
 version:             0.2.0.0
 synopsis:            International Geomagnetic Reference Field
 description:
-  An implemetation of the Internation Geomagnetic Reference Field, a model of the Earth's magnetic field.
+  An implemetation of the International Geomagnetic Reference Field, a model of the Earth's magnetic field.
   .
   Includes model coefficients from the 11th Edition of the IGRF.
 homepage:            https://github.com/dmcclean/igrf
