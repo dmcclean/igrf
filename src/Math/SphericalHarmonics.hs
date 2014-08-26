@@ -83,7 +83,7 @@ evaluateModelGradient model r colat lon = makeTuple . fmap negate $ modelGrad [r
     makeTuple [x, y, z] = (x, y, z)
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model at a specified location, in Cartesian coordinates.
--- The result is expressed in a reference frame locally tangent to the specified location.
+-- The result is expressed in a reference frame locally tangent to the sphere at the specified location.
 evaluateModelGradientInLocalTangentPlane :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
                                          -> a -- ^ Spherical radius
                                          -> a -- ^ Spherical colatitude (radian)
