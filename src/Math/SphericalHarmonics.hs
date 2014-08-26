@@ -38,7 +38,9 @@ combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible
                                                            , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
                                                            }
   where
-    combineCoefficients c1 c2 = take (max (length c1) (length c2)) $ zipWith addPairs (c1 ++ repeat (0,0)) (c2 ++ repeat (0,0))
+    combineCoefficients []       cs       = cs
+    combineCoefficients cs       []       = cs
+    combineCoefficients (c1:cs1) (c2:cs2) = addPairs c1 c2 : combineCoefficients cs1 cs2
     addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
 -- | Linearly scales a spherical harmonic model.
@@ -81,7 +83,7 @@ evaluateModelGradient model r colat lon = makeTuple . fmap negate $ modelGrad [r
     makeTuple [x, y, z] = (x, y, z)
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model at a specified location, in Cartesian coordinates.
--- The result is expressed in a reference frame locally tangent to the specified location.
+-- The result is expressed in a reference frame locally tangent to the sphere at the specified location.
 evaluateModelGradientInLocalTangentPlane :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
                                          -> a -- ^ Spherical radius
                                          -> a -- ^ Spherical colatitude (radian)

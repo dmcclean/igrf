@@ -25,7 +25,7 @@ fieldAtTime m t = combine (fieldAtEpoch m) (scale t $ secularVariation m)
 
 -- | The International Geomagnetic Reference Field model, 11th edition.
 -- Model epoch is January 1st, 2010.
-igrf11 :: (Floating a) => MagneticModel a
+igrf11 :: (Fractional a) => MagneticModel a
 igrf11 = MagneticModel
        {
          fieldAtEpoch = f
