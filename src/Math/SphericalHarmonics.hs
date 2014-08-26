@@ -38,7 +38,9 @@ combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible
                                                            , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
                                                            }
   where
-    combineCoefficients c1 c2 = take (max (length c1) (length c2)) $ zipWith addPairs (c1 ++ repeat (0,0)) (c2 ++ repeat (0,0))
+    combineCoefficients []       cs       = cs
+    combineCoefficients cs       []       = cs
+    combineCoefficients (c1:cs1) (c2:cs2) = addPairs c1 c2 : combineCoefficients cs1 cs2
     addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
 -- | Linearly scales a spherical harmonic model.
