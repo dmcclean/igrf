@@ -1,11 +1,10 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TypeFamilies  #-}
 
 -- | Provides spherical harmonic models of scalar-valued functions.
 module Math.SphericalHarmonics
 (
   SphericalHarmonicModel(..)
-, combine
-, scale
 , changeReferenceRadius
 , evaluateModel
 , evaluateModelGradient
@@ -13,6 +12,7 @@ module Math.SphericalHarmonics
 )
 where
 
+import Data.VectorSpace
 import Math.SphericalHarmonics.AssociatedLegendre
 import Numeric.AD
 
@@ -27,28 +27,29 @@ data SphericalHarmonicModel a = SphericalHarmonicModel
                               }
   deriving (Functor)
 
--- TODO: consider how to relax the reference radius error condition
--- TODO: make SphericalHarmonicModel an instance of additive typeclass
--- | Adds two compatible spherical harmonic models.
-combine :: (Fractional a, Eq a) => SphericalHarmonicModel a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = combine m1 (changeReferenceRadius (referenceRadius m1) m2)
-              | otherwise                                  = SphericalHarmonicModel
-                                                           {
-                                                             modelDegree = max (modelDegree m1) (modelDegree m2)
-                                                           , referenceRadius = referenceRadius m1
-                                                           , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
-                                                           }
-  where
-    combineCoefficients []       cs       = cs
-    combineCoefficients cs       []       = cs
-    combineCoefficients (c1:cs1) (c2:cs2) = addPairs c1 c2 : combineCoefficients cs1 cs2
-    addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
+instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
+  zeroV = SphericalHarmonicModel 0 1 [(0,0)]
+  negateV (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r cs'
+    where
+      cs' = map (mapWholePair negate) cs
+  m1 ^+^ m2 | (referenceRadius m1 /= referenceRadius m2) = m1 ^+^ (changeReferenceRadius (referenceRadius m1) m2)
+            | otherwise                                  = SphericalHarmonicModel
+                                                         {
+                                                           modelDegree = max (modelDegree m1) (modelDegree m2)
+                                                         , referenceRadius = referenceRadius m1
+                                                         , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
+                                                         }
+    where
+      combineCoefficients []       cs       = cs
+      combineCoefficients cs       []       = cs
+      combineCoefficients (c1:cs1) (c2:cs2) = addPairs c1 c2 : combineCoefficients cs1 cs2
+      addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
--- | Linearly scales a spherical harmonic model.
-scale :: (Num a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-scale x (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r $ fmap scalePair cs
-  where
-    scalePair (g, h) = (x * g, x * h)
+instance (Fractional a, Eq a) => VectorSpace (SphericalHarmonicModel a) where
+  type Scalar (SphericalHarmonicModel a) = a
+  x *^ (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r cs'
+    where
+      cs' = map (mapWholePair (* x)) cs
 
 changeReferenceRadius :: (Fractional a, Eq a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
 changeReferenceRadius r' m@(SphericalHarmonicModel d r cs) | r == r'   = m
@@ -57,7 +58,6 @@ changeReferenceRadius r' m@(SphericalHarmonicModel d r cs) | r == r'   = m
     cs' = mapInd (mapWholePair . transform) cs
     ratio = r / r'
     transform ix = (* (ratio ^ (2 + degreeFromIndex ix)))
-    mapWholePair f (a, b) = (f a, f b)
     mapInd f = zipWith f [(0 :: Int) ..]
 
 -- | Computes the scalar value of the spherical harmonic model at a specified spherical position.
@@ -110,6 +110,9 @@ computeIndex n m = triangle n + m
 
 triangle :: Int -> Int
 triangle n = (n * (n + 1)) `div` 2
+
+mapWholePair :: (a -> b) -> (a, a) -> (b, b)
+mapWholePair f (a, b) = (f a, f b)
 
 degreeFromIndex :: Int -> Int
 degreeFromIndex = floor . inverseTriangle

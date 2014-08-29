@@ -8,6 +8,7 @@ module IGRF
 )
 where
 
+import Data.VectorSpace
 import Math.SphericalHarmonics
 
 -- | Represents a spherical harmonic model of a magnetic field.
@@ -21,7 +22,7 @@ data MagneticModel a = MagneticModel
 fieldAtTime :: (Fractional a, Eq a) => MagneticModel a -- ^ Magnetic field model
             -> a -- ^ Time since model epoch (year)
             -> SphericalHarmonicModel a -- ^ Spherical harmonic model of magnetic field at specified time. Field in nT, reference radius in km
-fieldAtTime m t = combine (fieldAtEpoch m) (scale t $ secularVariation m)
+fieldAtTime m t = (fieldAtEpoch m) ^+^ (t *^ secularVariation m)
 
 -- | The International Geomagnetic Reference Field model, 11th edition.
 -- Model epoch is January 1st, 2010.
