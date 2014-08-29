@@ -45,7 +45,7 @@ combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible
 
 -- | Linearly scales a spherical harmonic model.
 scale :: (Num a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-scale x m = m { coefficients = fmap scalePair (coefficients m) }
+scale x (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r $ fmap scalePair cs
   where
     scalePair (g, h) = (x * g, x * h)
 
@@ -55,12 +55,10 @@ evaluateModel :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical 
               -> a -- ^ Spherical colatitude (radian)
               -> a -- ^ Spherical longitude (radian)
               -> a -- ^ Model value
-evaluateModel model r colat lon = refR * sumOverDegree
+evaluateModel (SphericalHarmonicModel deg refR cs) r colat lon = refR * sumOverDegree
   where
-    refR = referenceRadius model
-    deg = modelDegree model
-    gs = map fst $ coefficients model
-    hs = map snd $ coefficients model
+    gs = map fst cs
+    hs = map snd cs
     sumOverDegree = sum $ fmap degreeTerm [0..deg]
     degreeTerm n = ((refR / r) ^ (n + 1)) * (sum $ fmap (orderTerm n) [0..n])
     orderTerm n m = lonFactor * (p (cos colat))
