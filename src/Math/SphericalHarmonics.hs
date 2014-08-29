@@ -8,6 +8,7 @@ module Math.SphericalHarmonics
 , changeReferenceRadius
 , evaluateModel
 , evaluateModelGradient
+, evaluateModelGradientCartesian
 , evaluateModelGradientInLocalTangentPlane
 )
 where
@@ -88,7 +89,18 @@ evaluateModelGradient :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Sp
 evaluateModelGradient model r colat lon = makeTuple . fmap negate $ modelGrad [r, colat, lon]
   where
     modelGrad = grad (\[r', c', l'] -> evaluateModel (fmap auto model) r' c' l')
-    makeTuple [x, y, z] = (x, y, z)
+
+evaluateModelGradientCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a
+                               -> a
+                               -> a
+                               -> a
+                               -> (a, a, a) -- x y z
+evaluateModelGradientCartesian model x y z = makeTuple . fmap negate $ modelGrad [x, y, z]
+  where
+    modelGrad = grad (\[x', y', z'] -> let r' = sqrt $ (x' * x') + (y' * y') + (z' * z')
+                                           c' = acos (z' / r')
+                                           l' = atan2 y' x'
+                                        in evaluateModel (fmap auto model) r' c' l')
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model at a specified location, in Cartesian coordinates.
 -- The result is expressed in a reference frame locally tangent to the sphere at the specified location.
@@ -118,3 +130,6 @@ degreesAndOrders = degreesAndOrders' 0 0
 
 mapWholePair :: (a -> b) -> (a, a) -> (b, b)
 mapWholePair f (a, b) = (f a, f b)
+
+makeTuple :: [a] -> (a, a, a)
+makeTuple [x, y, z] = (x, y, z)
