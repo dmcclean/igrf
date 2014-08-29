@@ -7,7 +7,6 @@ module Math.SphericalHarmonics
 , combine
 , scale
 , changeReferenceRadius
-, degreeFromIndex
 , evaluateModel
 , evaluateModelGradient
 , evaluateModelGradientInLocalTangentPlane
