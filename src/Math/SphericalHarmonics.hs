@@ -9,6 +9,7 @@ module Math.SphericalHarmonics
 , evaluateModel
 , evaluateModelGradient
 , evaluateModelGradientInLocalTangentPlane
+, degreesAndOrders
 )
 where
 
@@ -55,10 +56,9 @@ changeReferenceRadius :: (Fractional a, Eq a) => a -> SphericalHarmonicModel a -
 changeReferenceRadius r' m@(SphericalHarmonicModel d r cs) | r == r'   = m
                                                            | otherwise = (SphericalHarmonicModel d r' cs')
   where
-    cs' = mapInd (mapWholePair . transform) cs
+    cs' = zipWith (mapWholePair . transform) degreesAndOrders cs
     ratio = r / r'
-    transform ix = (* (ratio ^ (2 + degreeFromIndex ix)))
-    mapInd f = zipWith f [(0 :: Int) ..]
+    transform (n, _) = (* (ratio ^ (2 + n)))
 
 -- | Computes the scalar value of the spherical harmonic model at a specified spherical position.
 evaluateModel :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
@@ -111,13 +111,11 @@ computeIndex n m = triangle n + m
 triangle :: Int -> Int
 triangle n = (n * (n + 1)) `div` 2
 
+degreesAndOrders :: [(Int, Int)]
+degreesAndOrders = degreesAndOrders' 0 0
+  where
+    degreesAndOrders' n 0 = (n, n) : degreesAndOrders' (n+1) (n+1)
+    degreesAndOrders' n m = (n, n - m) : degreesAndOrders' n (m - 1)
+
 mapWholePair :: (a -> b) -> (a, a) -> (b, b)
 mapWholePair f (a, b) = (f a, f b)
-
-degreeFromIndex :: Int -> Int
-degreeFromIndex = floor . inverseTriangle
-  where
-    -- since 0 = n^2 + n - 2 *tri(n), we can use the quadratic formula
-    -- a = 1, b = 1, c = -2t
-    -- I'm not sure exactly why, but this gives the correct answers when using the positive root of the discriminant
-    inverseTriangle t = (-1 + sqrt(1 + (8 * fromIntegral t))) / (2 :: Double) -- explicitly specify Double to avoid warning about defaulting
