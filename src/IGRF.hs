@@ -18,7 +18,7 @@ data MagneticModel a = MagneticModel
                      }
 
 -- | Gets a spherical harmonic model of a magnetic field at a specified time offset from the model epoch.
-fieldAtTime :: (Num a, Eq a) => MagneticModel a -- ^ Magnetic field model
+fieldAtTime :: (Fractional a, Eq a) => MagneticModel a -- ^ Magnetic field model
             -> a -- ^ Time since model epoch (year)
             -> SphericalHarmonicModel a -- ^ Spherical harmonic model of magnetic field at specified time. Field in nT, reference radius in km
 fieldAtTime m t = combine (fieldAtEpoch m) (scale t $ secularVariation m)

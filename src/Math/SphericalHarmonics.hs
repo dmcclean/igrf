@@ -6,6 +6,8 @@ module Math.SphericalHarmonics
   SphericalHarmonicModel(..)
 , combine
 , scale
+, changeReferenceRadius
+, degreeFromIndex
 , evaluateModel
 , evaluateModelGradient
 , evaluateModelGradientInLocalTangentPlane
@@ -29,8 +31,8 @@ data SphericalHarmonicModel a = SphericalHarmonicModel
 -- TODO: consider how to relax the reference radius error condition
 -- TODO: make SphericalHarmonicModel an instance of additive typeclass
 -- | Adds two compatible spherical harmonic models.
-combine :: (Num a, Eq a) => SphericalHarmonicModel a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = error "Incompatible model reference radii."
+combine :: (Fractional a, Eq a) => SphericalHarmonicModel a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
+combine m1 m2 | (referenceRadius m1 /= referenceRadius m2) = combine m1 (changeReferenceRadius (referenceRadius m1) m2)
               | otherwise                                  = SphericalHarmonicModel
                                                            {
                                                              modelDegree = max (modelDegree m1) (modelDegree m2)
@@ -48,6 +50,16 @@ scale :: (Num a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
 scale x (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r $ fmap scalePair cs
   where
     scalePair (g, h) = (x * g, x * h)
+
+changeReferenceRadius :: (Fractional a, Eq a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
+changeReferenceRadius r' m@(SphericalHarmonicModel d r cs) | r == r'   = m
+                                                           | otherwise = (SphericalHarmonicModel d r' cs')
+  where
+    cs' = mapInd (mapWholePair . transform) cs
+    ratio = r / r'
+    transform ix = (* (ratio ^ (2 + degreeFromIndex ix)))
+    mapWholePair f (a, b) = (f a, f b)
+    mapInd f = zipWith f [(0 :: Int) ..]
 
 -- | Computes the scalar value of the spherical harmonic model at a specified spherical position.
 evaluateModel :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
@@ -99,3 +111,11 @@ computeIndex n m = triangle n + m
 
 triangle :: Int -> Int
 triangle n = (n * (n + 1)) `div` 2
+
+degreeFromIndex :: Int -> Int
+degreeFromIndex = floor . inverseTriangle
+  where
+    -- since 0 = n^2 + n - 2 *tri(n), we can use the quadratic formula
+    -- a = 1, b = 1, c = -2t
+    -- I'm not sure exactly why, but this gives the correct answers when using the positive root of the discriminant
+    inverseTriangle t = (-1 + sqrt(1 + (8 * fromIntegral t))) / (2 :: Double) -- explicitly specify Double to avoid warning about defaulting
