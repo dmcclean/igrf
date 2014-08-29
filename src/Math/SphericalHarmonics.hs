@@ -9,7 +9,6 @@ module Math.SphericalHarmonics
 , evaluateModel
 , evaluateModelGradient
 , evaluateModelGradientInLocalTangentPlane
-, degreesAndOrders
 )
 where
 
