@@ -4,8 +4,8 @@
 -- | Provides spherical harmonic models of scalar-valued functions.
 module Math.SphericalHarmonics
 (
-  SphericalHarmonicModel(..)
-, changeReferenceRadius
+  SphericalHarmonicModel
+, sphericalHarmonicModel
 , evaluateModel
 , evaluateModelGradient
 , evaluateModelGradientCartesian
@@ -20,47 +20,37 @@ import Math.SphericalHarmonics.AssociatedLegendre
 import Numeric.AD
 
 -- | Represents a spherical harmonic model of a scalar-valued function.
-data SphericalHarmonicModel a = SphericalHarmonicModel
-                              {
-                                modelDegree :: Int       -- ^ The maximum degree of the model. Must be >= 0.
-                              , referenceRadius :: a     -- ^ The reference radius used to define the model.
-                              , coefficients :: [(a, a)] -- ^ G and H coefficients of the model and their secular variations.
-                                                         -- These coefficients are stored in the order [(g_0_0, h_0_0), (g_1_0, h1_0_), 1_1, 2_0, 2_1, 2_2, 3_0, 3_1, 3_2, 3_3, ...]
-                                                         -- There must be Triangle('modelDegree' + 1) coefficients.
-                              }
+data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
   deriving (Functor)
 
+sphericalHarmonicModel :: (Fractional a) => Int -> a -> [(a, a)] -> SphericalHarmonicModel a
+sphericalHarmonicModel deg r cs | valid = SphericalHarmonicModel cs''
+                                | otherwise = error "Supplied model degree does not match number of coefficients."
+  where
+    cs' = triangulate cs
+    cs'' = normalizeReferenceRadius r cs'
+    deg' = length cs'' - 1
+    valid = (deg == deg') && (length (cs'' !! deg') == deg' + 1)
+
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
-  zeroV = SphericalHarmonicModel 0 1 [(0,0)]
-  negateV (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r cs'
-    where
-      cs' = map (mapWholePair negate) cs
-  m1 ^+^ m2 | (referenceRadius m1 /= referenceRadius m2) = m1 ^+^ (changeReferenceRadius (referenceRadius m1) m2)
-            | otherwise                                  = SphericalHarmonicModel
-                                                         {
-                                                           modelDegree = max (modelDegree m1) (modelDegree m2)
-                                                         , referenceRadius = referenceRadius m1
-                                                         , coefficients = combineCoefficients (coefficients m1) (coefficients m2)
-                                                         }
+  zeroV = SphericalHarmonicModel [[(0,0)]]
+  negateV = fmap negate
+  (SphericalHarmonicModel m1) ^+^ (SphericalHarmonicModel m2) = SphericalHarmonicModel (combineCoefficients m1 m2)
     where
       combineCoefficients []       cs       = cs
       combineCoefficients cs       []       = cs
-      combineCoefficients (c1:cs1) (c2:cs2) = addPairs c1 c2 : combineCoefficients cs1 cs2
+      combineCoefficients (c1:cs1) (c2:cs2) = combine c1 c2 : combineCoefficients cs1 cs2
+      combine = zipWith addPairs
       addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
 instance (Fractional a, Eq a) => VectorSpace (SphericalHarmonicModel a) where
   type Scalar (SphericalHarmonicModel a) = a
-  x *^ (SphericalHarmonicModel d r cs) = SphericalHarmonicModel d r cs'
-    where
-      cs' = map (mapWholePair (* x)) cs
+  x *^ m = fmap (* x) m
 
-changeReferenceRadius :: (Fractional a, Eq a) => a -> SphericalHarmonicModel a -> SphericalHarmonicModel a
-changeReferenceRadius r' m@(SphericalHarmonicModel d r cs) | r == r'   = m
-                                                           | otherwise = (SphericalHarmonicModel d r' cs')
+normalizeReferenceRadius :: (Fractional a) => a -> [[(a, a)]] -> [[(a, a)]]
+normalizeReferenceRadius r = zipWith (fmap . mapWholePair . transform) [0 :: Int ..]
   where
-    cs' = zipWith (mapWholePair . transform) degreesAndOrders cs
-    ratio = r / r'
-    transform (n, _) = (* (ratio ^ (2 + n)))
+    transform n = (* (r ^ (2 + n)))
 
 -- | Computes the scalar value of the spherical harmonic model at a specified spherical position.
 evaluateModel :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
@@ -68,26 +58,7 @@ evaluateModel :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical
               -> a -- ^ Spherical colatitude (radian)
               -> a -- ^ Spherical longitude (radian)
               -> a -- ^ Model value
-evaluateModel (SphericalHarmonicModel deg refR cs) r colat lon = evaluateModel' (triangulate cs) r colat lon
-
-{- refR * sumOverDegree
-  where
-    sumOverDegree = sum $ fmap degreeTerm [0..deg]
-    degreeTerm n = ((refR / r) ^ (n + 1)) * (sum $ fmap (orderTerm n) [0..n])
-    orderTerm n m = lonFactor * (p (cos colat))
-      where
-        scaledLon = lon * fromIntegral m
-        lonFactor = (g * cos scaledLon) + (h * sin scaledLon)
-        p = schmidtSemiNormalizedAssociatedLegendreFunction n m
-        (g, h) = cs !! computeIndex n m
--}
-
-evaluateModel' :: (RealFloat a, Ord a) => [[(a, a)]] -- model coefficients
-               -> a
-               -> a
-               -> a
-               -> a
-evaluateModel' cs r colat lon = sum $ zipWith (*) (iterate (/ r) (recip r)) (zipWith evaluateDegree [0..] cs)
+evaluateModel (SphericalHarmonicModel cs) r colat lon = sum $ zipWith (*) (iterate (/ r) (recip r)) (zipWith evaluateDegree [0..] cs)
   where
     cisLon = cis lon
     sines = 1 : iterate (* cisLon) cisLon
@@ -130,23 +101,11 @@ evaluateModelGradientInLocalTangentPlane model r colat lon = (e, n, u)
     n = -colat' / r -- negated because the colatitude increase southward
     u = r'
 
-computeIndex :: Int -> Int -> Int
-computeIndex n m = triangle n + m
-
-triangle :: Int -> Int
-triangle n = (n * (n + 1)) `div` 2
-
 triangulate :: [a] -> [[a]]
 triangulate = triangulate' 1
   where
     triangulate' _ [] = []
     triangulate' n xs = (take n xs) : triangulate' (n+1) (drop n xs)
-
-degreesAndOrders :: [(Int, Int)]
-degreesAndOrders = degreesAndOrders' 0 0
-  where
-    degreesAndOrders' n 0 = (n, n) : degreesAndOrders' (n+1) (n+1)
-    degreesAndOrders' n m = (n, n - m) : degreesAndOrders' n (m - 1)
 
 mapWholePair :: (a -> b) -> (a, a) -> (b, b)
 mapWholePair f (a, b) = (f a, f b)
