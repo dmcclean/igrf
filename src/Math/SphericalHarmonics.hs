@@ -36,12 +36,8 @@ sphericalHarmonicModel deg r cs | valid = SphericalHarmonicModel cs''
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
   zeroV = SphericalHarmonicModel [[(0,0)]]
   negateV = fmap negate
-  (SphericalHarmonicModel m1) ^+^ (SphericalHarmonicModel m2) = SphericalHarmonicModel (combineCoefficients m1 m2)
+  (SphericalHarmonicModel m1) ^+^ (SphericalHarmonicModel m2) = SphericalHarmonicModel (zipWith (zipWith addPairs) m1 m2)
     where
-      combineCoefficients []       cs       = cs
-      combineCoefficients cs       []       = cs
-      combineCoefficients (c1:cs1) (c2:cs2) = combine c1 c2 : combineCoefficients cs1 cs2
-      combine = zipWith addPairs
       addPairs (g1, h1) (g2, h2) = (g1 + g2, h1 + h2)
 
 instance (Fractional a, Eq a) => VectorSpace (SphericalHarmonicModel a) where
