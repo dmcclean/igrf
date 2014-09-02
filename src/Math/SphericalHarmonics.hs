@@ -68,8 +68,6 @@ evaluateModel :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical 
               -> a -- ^ Model value
 evaluateModel (SphericalHarmonicModel deg refR cs) r colat lon = refR * sumOverDegree
   where
-    gs = map fst cs
-    hs = map snd cs
     sumOverDegree = sum $ fmap degreeTerm [0..deg]
     degreeTerm n = ((refR / r) ^ (n + 1)) * (sum $ fmap (orderTerm n) [0..n])
     orderTerm n m = lonFactor * (p (cos colat))
@@ -77,8 +75,7 @@ evaluateModel (SphericalHarmonicModel deg refR cs) r colat lon = refR * sumOverD
         scaledLon = lon * fromIntegral m
         lonFactor = (g * cos scaledLon) + (h * sin scaledLon)
         p = schmidtSemiNormalizedAssociatedLegendreFunction n m
-        g = gs !! computeIndex n m
-        h = hs !! computeIndex n m
+        (g, h) = cs !! computeIndex n m
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model, in spherical coordinates, at a specified location.
 evaluateModelGradient :: (Floating a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
