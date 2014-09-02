@@ -7,6 +7,7 @@ module Math.SphericalHarmonics
   SphericalHarmonicModel
 , sphericalHarmonicModel
 , evaluateModel
+, evaluateModelCartesian
 , evaluateModelGradient
 , evaluateModelGradientCartesian
 , evaluateModelGradientInLocalTangentPlane
@@ -15,7 +16,7 @@ module Math.SphericalHarmonics
 where
 
 import Data.Complex
-import Data.VectorSpace
+import Data.VectorSpace hiding (magnitude)
 import Math.SphericalHarmonics.AssociatedLegendre
 import Numeric.AD
 
@@ -58,12 +59,35 @@ evaluateModel :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical
               -> a -- ^ Spherical colatitude (radian)
               -> a -- ^ Spherical longitude (radian)
               -> a -- ^ Model value
-evaluateModel (SphericalHarmonicModel cs) r colat lon = sum $ zipWith (*) (iterate (/ r) (recip r)) (zipWith evaluateDegree [0..] cs)
+evaluateModel m r colat lon = evaluateModel' m r (cos colat) (cis lon)
+
+evaluateModelCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- model
+                       -> a -- x
+                       -> a -- y
+                       -> a -- z
+                       -> a
+evaluateModelCartesian m x y z = evaluateModel' m r cosColat cisLon
   where
-    cisLon = cis lon
+    r = sqrt $ (x*x) + (y*y) + (z*z)
+    cosColat = z / r
+    cisLon = normalize $ mkPolar x y
+
+normalize :: (RealFloat a) => Complex a -> Complex a
+normalize r@(x :+ y) | isInfinite m' = 0
+                     | otherwise = (x * m') :+ (y * m')
+  where
+    m' = recip . magnitude $ r
+
+evaluateModel' :: (RealFloat a, Ord a) => SphericalHarmonicModel a
+               -> a -- r
+               -> a -- cosColat
+               -> Complex a -- cisLon
+               -> a
+evaluateModel' (SphericalHarmonicModel cs) r cosColat cisLon = sum $ zipWith (*) (iterate (/ r) (recip r)) (zipWith evaluateDegree [0..] cs)
+  where
     sines = 1 : iterate (* cisLon) cisLon
     evaluateDegree n cs' = sum $ zipWith3 evaluateOrder (fmap (schmidtSemiNormalizedAssociatedLegendreFunction n) [0..n]) cs' sines
-    evaluateOrder p (g, h) cisMLon = ((g * realPart cisMLon) + (h * imagPart cisMLon)) * (p (cos colat))
+    evaluateOrder p (g, h) cisMLon = ((g * realPart cisMLon) + (h * imagPart cisMLon)) * (p (cosColat))
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model, in spherical coordinates, at a specified location.
 evaluateModelGradient :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
@@ -82,10 +106,7 @@ evaluateModelGradientCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel
                                -> (a, a, a) -- x y z
 evaluateModelGradientCartesian model x y z = makeTuple . fmap negate $ modelGrad [x, y, z]
   where
-    modelGrad = grad (\[x', y', z'] -> let r' = sqrt $ (x' * x') + (y' * y') + (z' * z')
-                                           c' = acos (z' / r')
-                                           l' = atan2 y' x'
-                                        in evaluateModel (fmap auto model) r' c' l')
+    modelGrad = grad (\[x', y', z'] -> evaluateModelCartesian (fmap auto model) x' y' z')
 
 -- | Computes the gradient of the scalar value of the spherical harmonic model at a specified location, in Cartesian coordinates.
 -- The result is expressed in a reference frame locally tangent to the sphere at the specified location.
