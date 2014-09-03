@@ -6,6 +6,7 @@ module Math.SphericalHarmonics
 (
   SphericalHarmonicModel
 , sphericalHarmonicModel
+, scaledSphericalHarmonicModel
 , evaluateModel
 , evaluateModelCartesian
 , evaluateModelGradient
@@ -24,17 +25,26 @@ data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
   deriving (Functor)
 
 -- | Creates a spherical harmonic model.
--- Result in an error if the length of the list is not a triangular number or does not correspond with the supplied degree.
-sphericalHarmonicModel :: (Fractional a) => a -- ^ The reference radius
+-- Result in an error if the length of the list is not a triangular number.
+sphericalHarmonicModel :: (Fractional a) => [(a, a)] -- ^ A list of g and h coefficients for the model
+                       -> SphericalHarmonicModel a -- ^ The spherical harmonic model
+sphericalHarmonicModel cs | valid = SphericalHarmonicModel cs'
+                          | otherwise = error "Supplied model degree does not match number of coefficients."
+  where
+    cs' = triangulate cs
+    deg = length cs' - 1
+    valid = (length (cs' !! deg) == deg + 1)
+
+-- | Creates a spherical harmonic model, scaling coefficients for the supplied reference radius.
+-- Result in an error if the length of the list is not a triangular number.
+scaledSphericalHarmonicModel :: (Fractional a) => a -- ^ The reference radius
                        -> [(a, a)] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
-sphericalHarmonicModel r cs | valid = SphericalHarmonicModel cs''
-                            | otherwise = error "Supplied model degree does not match number of coefficients."
+scaledSphericalHarmonicModel r cs = sphericalHarmonicModel cs'''
   where
     cs' = triangulate cs
     cs'' = normalizeReferenceRadius r cs'
-    deg = length cs'' - 1
-    valid = (length (cs'' !! deg) == deg + 1)
+    cs''' = concat cs''
 
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
   zeroV = SphericalHarmonicModel [[(0,0)]]
