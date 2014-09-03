@@ -25,17 +25,16 @@ data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
 
 -- | Creates a spherical harmonic model.
 -- Result in an error if the length of the list is not a triangular number or does not correspond with the supplied degree.
-sphericalHarmonicModel :: (Fractional a) => Int -- ^ The degree of the model
-                       -> a -- ^ The reference radius
+sphericalHarmonicModel :: (Fractional a) => a -- ^ The reference radius
                        -> [(a, a)] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
-sphericalHarmonicModel deg r cs | valid = SphericalHarmonicModel cs''
-                                | otherwise = error "Supplied model degree does not match number of coefficients."
+sphericalHarmonicModel r cs | valid = SphericalHarmonicModel cs''
+                            | otherwise = error "Supplied model degree does not match number of coefficients."
   where
     cs' = triangulate cs
     cs'' = normalizeReferenceRadius r cs'
-    deg' = length cs'' - 1
-    valid = (deg == deg') && (length (cs'' !! deg') == deg' + 1)
+    deg = length cs'' - 1
+    valid = (length (cs'' !! deg) == deg + 1)
 
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
   zeroV = SphericalHarmonicModel [[(0,0)]]
