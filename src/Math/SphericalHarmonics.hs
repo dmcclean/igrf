@@ -39,11 +39,13 @@ sphericalHarmonicModel cs | valid = SphericalHarmonicModel cs'
 scaledSphericalHarmonicModel :: (Fractional a) => a -- ^ The reference radius
                        -> [(a, a)] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
-scaledSphericalHarmonicModel r cs = sphericalHarmonicModel cs'''
+scaledSphericalHarmonicModel r = sphericalHarmonicModel . normalizeReferenceRadius r
   where
-    cs' = triangulate cs
-    cs'' = normalizeReferenceRadius r cs'
-    cs''' = concat cs''
+    normalizeReferenceRadius :: (Fractional a) => a -> [(a, a)] -> [(a, a)]
+    normalizeReferenceRadius r = zipWith (mapWholePair . transform) ns
+      where
+        transform n c = r ^ (2 + n) * c
+        ns = concatMap (\n -> replicate (n + 1) n) [0..]
 
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
   zeroV = SphericalHarmonicModel [[(0,0)]]
@@ -58,11 +60,6 @@ instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
 instance (Fractional a, Eq a) => VectorSpace (SphericalHarmonicModel a) where
   type Scalar (SphericalHarmonicModel a) = a
   x *^ m = fmap (* x) m
-
-normalizeReferenceRadius :: (Fractional a) => a -> [[(a, a)]] -> [[(a, a)]]
-normalizeReferenceRadius r = zipWith (fmap . mapWholePair . transform) [0 :: Int ..]
-  where
-    transform n = (* (r ^ (2 + n)))
 
 -- | Computes the scalar value of the spherical harmonic model at a specified spherical position.
 evaluateModel :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
