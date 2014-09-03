@@ -23,7 +23,12 @@ import Numeric.AD
 data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
   deriving (Functor)
 
-sphericalHarmonicModel :: (Fractional a) => Int -> a -> [(a, a)] -> SphericalHarmonicModel a
+-- | Creates a spherical harmonic model.
+-- Result in an error if the length of the list is not a triangular number or does not correspond with the supplied degree.
+sphericalHarmonicModel :: (Fractional a) => Int -- ^ The degree of the model
+                       -> a -- ^ The reference radius
+                       -> [(a, a)] -- ^ A list of g and h coefficients for the model
+                       -> SphericalHarmonicModel a -- ^ The spherical harmonic model
 sphericalHarmonicModel deg r cs | valid = SphericalHarmonicModel cs''
                                 | otherwise = error "Supplied model degree does not match number of coefficients."
   where
