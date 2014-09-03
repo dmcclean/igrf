@@ -2,7 +2,7 @@
 -- see http://haskell.org/cabal/users-guide/
 
 name:                igrf
-version:             0.2.0.0
+version:             0.3.0.0
 synopsis:            International Geomagnetic Reference Field
 description:
   An implemetation of the International Geomagnetic Reference Field, a model of the Earth's magnetic field.
