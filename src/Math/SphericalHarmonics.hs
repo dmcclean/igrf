@@ -29,11 +29,10 @@ data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
 sphericalHarmonicModel :: (Fractional a) => [(a, a)] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
 sphericalHarmonicModel cs | valid = SphericalHarmonicModel cs'
-                          | otherwise = error "Supplied model degree does not match number of coefficients."
+                          | otherwise = error "The number of coefficients is not a triangular number."
   where
     cs' = triangulate cs
-    deg = length cs' - 1
-    valid = (length (cs' !! deg) == deg + 1)
+    valid = length (last cs') == length cs'
 
 -- | Creates a spherical harmonic model, scaling coefficients for the supplied reference radius.
 -- Result in an error if the length of the list is not a triangular number.
