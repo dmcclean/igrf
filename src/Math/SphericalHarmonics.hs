@@ -11,7 +11,6 @@ module Math.SphericalHarmonics
 , evaluateModelGradient
 , evaluateModelGradientCartesian
 , evaluateModelGradientInLocalTangentPlane
-, triangulate
 )
 where
 
@@ -57,22 +56,17 @@ evaluateModel :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical
               -> a -- ^ Model value
 evaluateModel m r colat lon = evaluateModel' m r (cos colat) (cis lon)
 
-evaluateModelCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- model
-                       -> a -- x
-                       -> a -- y
-                       -> a -- z
-                       -> a
+-- | Computes the scalar value of the spherical harmonic model at a specified Cartesian position.
+evaluateModelCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
+                       -> a -- ^ X position
+                       -> a -- ^ Y position
+                       -> a -- ^ Z position
+                       -> a -- ^ Model value
 evaluateModelCartesian m x y z = evaluateModel' m r cosColat cisLon
   where
     r = sqrt $ (x*x) + (y*y) + (z*z)
     cosColat = z / r
     cisLon = normalize $ mkPolar x y
-
-normalize :: (RealFloat a) => Complex a -> Complex a
-normalize r@(x :+ y) | isInfinite m' = 0
-                     | otherwise = (x * m') :+ (y * m')
-  where
-    m' = recip . magnitude $ r
 
 evaluateModel' :: (RealFloat a, Ord a) => SphericalHarmonicModel a
                -> a -- r
@@ -95,11 +89,14 @@ evaluateModelGradient model r colat lon = makeTuple . fmap negate $ modelGrad [r
   where
     modelGrad = grad (\[r', c', l'] -> evaluateModel (fmap auto model) r' c' l')
 
-evaluateModelGradientCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a
-                               -> a
-                               -> a
-                               -> a
-                               -> (a, a, a) -- x y z
+-- | Computes the gradient of the scalar value of the spherical harmonic model at a specified location, in Cartesian coordinates.
+-- The result is expressed in right-handed coordinates centered at the origin of the sphere, with the positive Z-axis piercing the
+-- north pole and the positive x-axis piercing the reference meridian.
+evaluateModelGradientCartesian :: (RealFloat a, Ord a) => SphericalHarmonicModel a -- ^ Spherical harmonic model
+                               -> a -- ^ X position
+                               -> a -- ^ Y position
+                               -> a -- ^ Z position
+                               -> (a, a, a) -- X, Y, and Z components of gradient
 evaluateModelGradientCartesian model x y z = makeTuple . fmap negate $ modelGrad [x, y, z]
   where
     modelGrad = grad (\[x', y', z'] -> evaluateModelCartesian (fmap auto model) x' y' z')
@@ -123,6 +120,12 @@ triangulate = triangulate' 1
   where
     triangulate' _ [] = []
     triangulate' n xs = (take n xs) : triangulate' (n+1) (drop n xs)
+
+normalize :: (RealFloat a) => Complex a -> Complex a
+normalize r@(x :+ y) | isInfinite m' = 0
+                     | otherwise = (x * m') :+ (y * m')
+  where
+    m' = recip . magnitude $ r
 
 mapWholePair :: (a -> b) -> (a, a) -> (b, b)
 mapWholePair f (a, b) = (f a, f b)
