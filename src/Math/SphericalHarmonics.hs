@@ -26,24 +26,21 @@ data SphericalHarmonicModel a = SphericalHarmonicModel [[(a, a)]]
 
 -- | Creates a spherical harmonic model.
 -- Result in an error if the length of the list is not a triangular number.
-sphericalHarmonicModel :: (Fractional a) => [(a, a)] -- ^ A list of g and h coefficients for the model
+sphericalHarmonicModel :: (Fractional a) => [[(a, a)]] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
-sphericalHarmonicModel cs | valid = SphericalHarmonicModel cs'
+sphericalHarmonicModel cs | valid = SphericalHarmonicModel cs
                           | otherwise = error "The number of coefficients is not a triangular number."
   where
-    cs' = triangulate cs
-    valid = length (last cs') == length cs'
+    valid = and $ zipWith (==) (fmap length cs) [1..length cs]
 
 -- | Creates a spherical harmonic model, scaling coefficients for the supplied reference radius.
 -- Result in an error if the length of the list is not a triangular number.
 scaledSphericalHarmonicModel :: (Fractional a) => a -- ^ The reference radius
-                       -> [(a, a)] -- ^ A list of g and h coefficients for the model
+                       -> [[(a, a)]] -- ^ A list of g and h coefficients for the model
                        -> SphericalHarmonicModel a -- ^ The spherical harmonic model
-scaledSphericalHarmonicModel r cs = sphericalHarmonicModel cs'''
+scaledSphericalHarmonicModel r cs = sphericalHarmonicModel cs'
   where
-    cs' = triangulate cs
-    cs'' = normalizeReferenceRadius r cs'
-    cs''' = concat cs''
+    cs' = normalizeReferenceRadius r cs
 
 instance(Fractional a, Eq a) => AdditiveGroup (SphericalHarmonicModel a) where
   zeroV = SphericalHarmonicModel [[(0,0)]]
@@ -130,12 +127,6 @@ evaluateModelGradientInLocalTangentPlane model r colat lon = (e, n, u)
     e = lon' / (r * sin colat)
     n = -colat' / r -- negated because the colatitude increase southward
     u = r'
-
-triangulate :: [a] -> [[a]]
-triangulate = triangulate' 1
-  where
-    triangulate' _ [] = []
-    triangulate' n xs = (take n xs) : triangulate' (n+1) (drop n xs)
 
 normalize :: (RealFloat a) => Complex a -> Complex a
 normalize r@(x :+ y) | isInfinite m' = 0
