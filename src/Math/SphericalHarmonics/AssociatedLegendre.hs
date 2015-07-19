@@ -18,10 +18,10 @@ associatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the 
                            -> a -> a
 associatedLegendreFunction n m = f
   where
-  	f x = (nonPolyTerm x) * (evalPoly p' x)
-  	nonPolyTerm x = (1 - (x * x)) ** (fromIntegral m / 2)
-  	p' = polyDerivs p !! m
-  	p = legendre n
+    f x = (nonPolyTerm x) * (evalPoly p' x)
+    nonPolyTerm x = (1 - (x * x)) ** (fromIntegral m / 2)
+    p' = polyDerivs p !! m
+    p = legendre n
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 -- | Computes the Schmidt semi-normalized associated Legendre function of degree 'n' and order 'm'.
@@ -32,8 +32,8 @@ schmidtSemiNormalizedAssociatedLegendreFunction :: (Floating a, Ord a) => Int --
 schmidtSemiNormalizedAssociatedLegendreFunction n 0 = associatedLegendreFunction n 0
 schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLegendreFunction n m
   where
-  	factor = (sqrt $ 2 / rawFactor)
-  	rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
+    factor = (sqrt $ 2 / rawFactor)
+    rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
     
 rawFactor' :: Integer -> Integer -> Integer
 rawFactor' n m = product . map (max 1) $ enumFromTo (n - m + 1) (n + m)
