@@ -6,8 +6,9 @@ module Math.SphericalHarmonics.AssociatedLegendre
 )
 where
 
-import Math.Polynomial hiding (x)
-import Math.Polynomial.Legendre
+import Data.Poly (VPoly, eval, deriv)
+import Data.Poly.Orthogonal (legendre)
+import Data.Euclidean (Field, WrappedFractional(..))
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 -- | Computes the associated Legendre function of degree 'n' and order 'm'.
@@ -18,10 +19,11 @@ associatedLegendreFunction :: (Floating a, Ord a) => Int -- ^ Degree 'n' of the 
                            -> a -> a
 associatedLegendreFunction n m = f
   where
-    f x = (nonPolyTerm x) * (evalPoly p' x)
-    nonPolyTerm x = (1 - (x * x)) ** (fromIntegral m / 2)
-    p' = polyDerivs p !! m
-    p = legendre n
+    f x = nonPolyTerm x * unwrapFractional (eval p' (WrapFractional x))
+    nonPolyTerm x = (1 - x * x) ** (fromIntegral m / 2)
+    p' = iterate deriv p !! m
+    p :: (Eq t, Field t) => VPoly t
+    p = legendre !! n
 
 -- definition from http://www.mathworks.com/help/matlab/ref/legendre.html#f89-998354
 -- | Computes the Schmidt semi-normalized associated Legendre function of degree 'n' and order 'm'.
@@ -34,6 +36,6 @@ schmidtSemiNormalizedAssociatedLegendreFunction n m = (* factor) . associatedLeg
   where
     factor = (sqrt $ 2 / rawFactor)
     rawFactor = fromIntegral $ rawFactor' (fromIntegral n) (fromIntegral m)
-    
+
 rawFactor' :: Integer -> Integer -> Integer
 rawFactor' n m = product . map (max 1) $ enumFromTo (n - m + 1) (n + m)
